@@ -6,10 +6,10 @@ set(ENABLE_CONSOLE FALSE)
 file(
     GLOB SOURCES
 
-    src/*.c
-    src/*.h
-    src/*.cpp
-    src/*.hpp
+    example/*.c
+    example/*.h
+    example/*.cpp
+    example/*.hpp
 )
 
 if (ENABLE_CONSOLE)

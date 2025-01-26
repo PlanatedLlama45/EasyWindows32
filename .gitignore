@@ -1,3 +1,4 @@
 build
 dependencies
 .git
+example/EasyWindows32.hpp
