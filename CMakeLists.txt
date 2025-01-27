@@ -12,6 +12,8 @@ file(
     example/*.hpp
 )
 
+file(COPY_FILE example/${PROJECT_NAME}.hpp ${PROJECT_NAME}.hpp)
+
 if (ENABLE_CONSOLE)
     add_executable(${PROJECT_NAME} ${SOURCES})
 else()
