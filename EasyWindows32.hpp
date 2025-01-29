@@ -41,8 +41,20 @@ SOFTWARE.
 
 namespace easywindows32 {
 
+/**
+ * @brief Класс-обёртка для шрифта
+ */
 class Font {
 public:
+    /**
+     * @brief Конструктор
+     * @param fontName имя шрифта в ОС Windows
+     * @param size размер шрифта
+     * @param weight вес (жирность) шрифта
+     * @param italic курсивный (T/F)
+     * @param underlined подчёркнутый (T/F)
+     * @param striked перечёркнутый (T/F)
+     */
     Font(LPCWSTR fontName, int size, int weight = FW_DONTCARE, bool italic = false, bool underlined = false, bool striked = false) :
         m_fontName(fontName),
         m_size(size), m_weight(weight),
@@ -60,6 +72,10 @@ public:
         );
     }
 
+    /**
+     * @brief Получить дескриптор шрифта
+     * @return Дескриптор шрифта
+     */
     const HFONT getHandle() const { return m_handle; }
 
 protected:
@@ -70,8 +86,15 @@ protected:
 };
 
 
+/**
+ * @brief Абстрактный класс элемента UI
+ */
 class IElement {
 public:
+    /**
+     * @brief Конструктор
+     * @param className внутреннее имя класса элемента
+     */
     IElement(LPCWSTR className) :
         m_className(className),
         m_id(++s_elemCount),
@@ -79,14 +102,37 @@ public:
         m_font(s_fontDefault)
         { }
 
+    /**
+     * @brief Получить ИД элемента
+     * @return ИД
+     */
     const uint64_t getID() const { return m_id; }
+    /**
+     * @brief Получить внутреннее имя класса элемента
+     * @return имя класса
+     */
     const LPCWSTR getClassName() const { return m_className; }
+    /**
+     * @brief Получить дескриптор элемента
+     * @return дескриптор
+     */
     const HWND getHandle() const { return m_handle; }
+    /**
+     * @brief Установить шрифт
+     * @param font ссылка на шрифт
+     */
     void setFont(const Font &font) { m_font = &font; }
 
+    /**
+     * @brief Установить шрифт по умолчанию (автоматически применяется ко всем элементам, созданным после установки)
+     * @param font ссылка на шрифт
+     */
     static void setFontDefault(const Font &font) { s_fontDefault = &font; }
 
-    // Initializes the handle and the font
+    /**
+     * @brief Инициализирует дескриптор и прикрепляет к нему шрифт
+     * @param parent дескриптор родительского элемента
+     */
     virtual void create(HWND parent) = 0;
 
 protected:
@@ -105,21 +151,49 @@ protected:
     }
 };
 
+
 uint64_t IElement::s_elemCount = 0;
 const Font *IElement::s_fontDefault = nullptr;
 
-
+/**
+ * @brief Энумерация выравнивания элементов/текста
+ */
 enum class Align { Left, Right, Center };
 
+
+/**
+ * @brief Абстрактный класс текстового элемента UI
+ */
 class ITextElement {
 public:
+    /**
+     * @brief Конструктор
+     * @param text текст
+     * @param alignText выравнивание текста
+     */
     ITextElement(const std::wstring &text, Align alignText) :
         m_text(text), m_textAlign(alignText)
         { }
 
+    /**
+     * @brief Получить текст
+     * @return Объект строки
+     */
     const std::wstring &getText() const { return m_text; }
+    /**
+     * @brief Получить текст
+     * @return Указатель на строку (c-style)
+     */
     const LPCWSTR getTextCstr() const { return m_text.c_str(); }
+    /**
+     * @brief Установить текст
+     * @param text объект строки
+     */
     void setText(const std::wstring &text) { m_text = text; m_updateHandleText(); }
+    /**
+     * @brief Установить строку
+     * @return указатель на строку (c-style)
+     */
     void setText(LPCWSTR text) { m_text = text; m_updateHandleText(); }
 
 protected:
@@ -144,28 +218,70 @@ protected:
         }
 };
 
+
+/**
+ * @brief Абстрактный класс элемента UI с позицией
+ */
 class IPositionElement {
 public:
+    /**
+     * @brief Конструктор
+     * @param posX X-координата
+     * @param posY Y-координата
+     */
     IPositionElement(SHORT posX, SHORT posY) :
         m_pos({ posX, posY })
         { }
 
+    /**
+     * @brief Получить X-координату
+     * @return X-координата
+     */
     const SHORT getPosX() const { return m_pos.X; }
+    /**
+     * @brief Получить Y-координату
+     * @return Y-координата
+     */
     const SHORT getPosY() const { return m_pos.Y; }
+    /**
+     * @brief Получить позицию
+     * @return позиция (COORD)
+     */
     const COORD getPos() const { return m_pos; }
 
 protected:
     COORD m_pos;
 };
 
+
+/**
+ * @brief Абстрактный класс элемента UI с позицией
+ */
 class ISizeElement {
 public:
+    /**
+     * @brief Конструктор
+     * @param width ширина (размер по X)
+     * @param height высота (размер по Y)
+     */
     ISizeElement(SHORT width, SHORT height) :
         m_size({ width, height })
         { }
 
+    /**
+     * @brief Получить ширину (размер по X)
+     * @return ширина
+     */
     const SHORT getWidth() const { return m_size.X; }
+    /**
+     * @brief Получить высоту (размер по Y)
+     * @return высота
+     */
     const SHORT getHeight() const { return m_size.Y; }
+    /**
+     * @brief Получить размер
+     * @return размер (COORD)
+     */
     const COORD getSize() const { return m_size; }
 
 protected:
@@ -173,8 +289,20 @@ protected:
 };
 
 
+/**
+ * @brief Класс-обёртка для статичного текстового элемента
+ */
 class Static : public IElement, public ITextElement, public IPositionElement, ISizeElement {
 public:
+    /**
+     * @brief Конструктор
+     * @param posX X-координата
+     * @param posY Y-координата
+     * @param width ширина
+     * @param height высота
+     * @param text текст = ""
+     * @param alignText выравнивание = Center
+     */
     Static(SHORT posX, SHORT posY, SHORT width, SHORT height, const std::wstring &text = L"", Align alignText = Align::Center) :
         IElement(L"static"),
         ITextElement(text, alignText),
@@ -182,6 +310,10 @@ public:
         ISizeElement(width, height)
         { }
 
+    /**
+     * @brief Инициализирует дескриптор и прикрепляет к нему шрифт
+     * @param parent дескриптор родительского элемента
+     */
     void create(HWND parent) override {
         m_handle = CreateWindow(
             m_className,
@@ -202,12 +334,28 @@ protected:
 };
 
 
+/**
+ * @brief Класс-обёртка для элемента кнопки
+ */
 class Button;
+/**
+ * @brief Тип функции для вызова внутри класса T
+ */
 template <class T>
 using FuncCall = void (*)(T &);
 
 class Button : public IElement, public ITextElement, public IPositionElement, public ISizeElement {
 public:
+    /**
+     * @brief Конструктор
+     * @param posX X-координата
+     * @param posY Y-координата
+     * @param width ширина
+     * @param height высота
+     * @param text текст = ""
+     * @param onClick ответная функция на нажатие = NULL
+     * @param alignText выравнивание = Center
+     */
     Button(SHORT posX, SHORT posY, SHORT width, SHORT height, const std::wstring &text = L"", FuncCall<Button> onClick = nullptr, Align alignText = Align::Center) :
         IElement(L"button"),
         ITextElement(text, alignText),
@@ -216,6 +364,10 @@ public:
         m_onClick(onClick)
         { }
 
+    /**
+     * @brief Инициализирует дескриптор и прикрепляет к нему шрифт
+     * @param parent дескриптор родительского элемента
+     */
     void create(HWND parent) override {
         m_handle = CreateWindow(
             m_className,
@@ -230,6 +382,10 @@ public:
         m_bindFont();
     }
 
+    /**
+     * @brief Получить ответную функцию
+     * @return ответная функция
+     */
     FuncCall<Button> getClickFunction() { return m_onClick; }
 
 protected:
@@ -240,8 +396,21 @@ protected:
 };
 
 
+/**
+ * @brief Класс-обёртка для элемента текстового ввода
+ */
 class Edit : public IElement, public ITextElement, public IPositionElement, public ISizeElement {
 public:
+    /**
+     * @brief Конструктор
+     * @param posX X-координата
+     * @param posY Y-координата
+     * @param width ширина
+     * @param height высота
+     * @param isNumberOnly только численный ввод (T/F) = F
+     * @param alignText выравнивание текста = Left
+     * @param presetText начальный текст = ""
+     */
     Edit(SHORT posX, SHORT posY, SHORT width, SHORT height, bool isNumberOnly = false, Align alignText = Align::Left, const std::wstring &presetText = L"") :
         IElement(L"edit"),
         ITextElement(presetText, alignText),
@@ -250,6 +419,10 @@ public:
         m_isNumberOnly(isNumberOnly)
         { }
 
+    /**
+     * @brief Инициализирует дескриптор и прикрепляет к нему шрифт
+     * @param parent дескриптор родительского элемента
+     */
     void create(HWND parent) override {
         m_handle = CreateWindow(
             m_className,
@@ -267,7 +440,15 @@ public:
     const std::wstring &getText() const = delete;
     const LPCWSTR getTextCstr() const = delete;
 
+    /**
+     * @brief Получить текст
+     * @return Объект строки
+     */
     const std::wstring &getText() { m_updateTextFromHandle(); return m_text; }
+    /**
+     * @brief Получить текст
+     * @return Указатель на строку (c-style)
+     */
     const LPCWSTR getTextCstr() { m_updateTextFromHandle(); return m_text.c_str(); }
 
 protected:
@@ -284,29 +465,94 @@ protected:
 };
 
 
+/**
+ * @brief Класс-обёртка ссылки на объект
+ * @tparam T тип объекта
+ */
 template <class T>
 class Reference {
 public:
-    Reference(const Reference &ref) : m_ptr(ref->m_ptr) { };
-    Reference(Reference &&ref) : m_ptr(ref->m_ptr) { };
+    /**
+     * @brief Конструктор по умолчанию
+     */
     Reference() : m_ptr(nullptr) { };
+    /**
+     * @brief Конструктор
+     * @param ref lvalue-ссылка на объект
+     */
     Reference(T &ref) : m_ptr(&ref) { };
+    /**
+     * @brief Конструктор
+     * @param ref rvalue-ссылка на объект
+     */
+    Reference(T &&ref) : m_ptr(&ref) { };
+    /**
+     * @brief Конструктор
+     * @param ref lvalue-ссылка на другую ссылку
+     */
+    Reference(const Reference<T> &ref) : m_ptr(ref->m_ptr) { };
+    /**
+     * @brief Конструктор
+     * @param ref rvalue-ссылка на другую ссылку
+     */
+    Reference(Reference<T> &&ref) : m_ptr(ref->m_ptr) { };
     
+    /**
+     * @brief Установка значения
+     * @param ref lvalue-ссылка на объект
+     */
     Reference &operator =(T &ref) { m_ptr = &ref; return *this; }
+    /**
+     * @brief Установка значения
+     * @param ref rvalue-ссылка на объект
+     */
     Reference &operator =(T &&ref) { m_ptr = &ref; return *this; }
+    /**
+     * @brief Установка значения
+     * @param ref lvalue-ссылка на другую ссылку
+     */
     Reference &operator =(const Reference &ref) { m_ptr = ref.m_ptr; return *this; }
+    /**
+     * @brief Установка значения
+     * @param ref rvalue-ссылка на другую ссылку
+     */
     Reference &operator =(Reference &&ref) { m_ptr = ref.m_ptr; return *this; }
+    /**
+     * @brief Обращение к объекту
+     * @return указатель на объект
+     */
     T *operator ->() { return m_ptr; }
 
+    /**
+     * @brief Проверка равенства ссылок
+     * @param ref1 ссылка А
+     * @param ref2 ссылка на объект Б
+     * @return T/F
+     */
     friend bool operator ==(const Reference &ref1, const T &ref2) { return (ref1.m_ptr == &ref2); }
+    /**
+     * @brief Проверка равенства ссылок
+     * @param ref1 ссылка А
+     * @param ref2 ссылка Б
+     * @return T/F
+     */
     friend bool operator ==(const Reference &ref1, const Reference &ref2) { return (ref1.m_ptr == ref2.m_ptr); }
 
 protected:
     T *m_ptr;
 };
 
+/**
+ * @brief Ссылка на Static
+ */
 using RStatic = Reference<Static>;
+/**
+ * @brief Ссылка на Button
+ */
 using RButton = Reference<Button>;
+/**
+ * @brief Ссылка на Edit
+ */
 using REdit = Reference<Edit>;
 
 
@@ -336,20 +582,42 @@ _M_AppData _m_appData = {
     .m_elements      = { }
 };
 
+/**
+ * @brief Установить положение окна на экране
+ * @param x X-координата
+ * @param y Y-координата
+ */
 void setWindowPosition(DWORD x, DWORD y) {
     _m_appData.m_posX = x;
     _m_appData.m_posY = y;
 }
+/**
+ * @brief Установить размер окна
+ * @param width ширина (X-размер)
+ * @param height высота (Y-размер)
+ */
 void setWindowSize(DWORD width, DWORD height) {
     _m_appData.m_width = width;
     _m_appData.m_height = height;
 }
+/**
+ * @brief Установить название окна
+ * @param title название
+ */
 void setWindowTitle(LPCWSTR title) {
     _m_appData.m_title = title;
 }
+/**
+ * @brief Установить стиль окна
+ * @param style флаги стилей (DWORD)
+ */
 void setWindowStyle(DWORD style) {
     _m_appData.m_style = style;
 }
+/**
+ * @brief Установить возможность измены размера окна
+ * @param value T/F
+ */
 void setWindowResizeable(bool value) {
     _m_appData.m_isResizeable = value;
     if (_m_appData.m_isResizeable)
@@ -358,22 +626,58 @@ void setWindowResizeable(bool value) {
         _m_appData.m_style &= ~WS_THICKFRAME;
 }
 
+/**
+ * @brief Добавить статичный текстовый элемент
+ * @param posX X-координата
+ * @param posY Y-координата
+ * @param width ширина
+ * @param height высота
+ * @param text текст = ""
+ * @param alignText выравнивание = Center
+ * @return Ссылка на добавленный статичный текстовый элемент
+ */
 Static &addStatic(SHORT posX, SHORT posY, SHORT width, SHORT height, const std::wstring &text = L"", Align alignText = Align::Center) {
     Static *newStatic = new Static(posX, posY, width, height, text, alignText);
     _m_appData.m_elements.push_back(dynamic_cast<IElement *>(newStatic));
     return *newStatic;
 }
+/**
+ * @brief Добавить кнопку
+ * @param posX X-координата
+ * @param posY Y-координата
+ * @param width ширина
+ * @param height высота
+ * @param text текст = ""
+ * @param onClick ответная функция на нажатие = NULL
+ * @param alignText выравнивание = Center
+ * @return Ссылка на добавленную кнопку
+ */
 Button &addButton(SHORT posX, SHORT posY, SHORT width, SHORT height, const std::wstring &text = L"", FuncCall<Button> onClick = nullptr, Align alignText = Align::Center) {
     Button *newBtn = new Button(posX, posY, width, height, text, onClick, alignText);
     _m_appData.m_elements.push_back(dynamic_cast<IElement *>(newBtn));
     return *newBtn;
 }
+/**
+ * @brief Добавить элемент текстового ввода
+ * @param posX X-координата
+ * @param posY Y-координата
+ * @param width ширина
+ * @param height высота
+ * @param isNumberOnly только численный ввод (T/F) = F
+ * @param alignText выравнивание текста = Left
+ * @param presetText начальный текст = ""
+ * @return Ссылка на добавленный элемент текстового ввода
+ */
 Edit &addEdit(SHORT posX, SHORT posY, SHORT width, SHORT height, bool isNumberOnly = false, Align alignText = Align::Left, const std::wstring &presetText = L"") {
     Edit *newEdit = new Edit(posX, posY, width, height, isNumberOnly, alignText, presetText);
     _m_appData.m_elements.push_back(dynamic_cast<IElement *>(newEdit));
     return *newEdit;
 }
 
+/**
+ * @brief Функция инициализации элементов окна, вызывается автоматически (один раз)
+ * @warning Функция должна быть определена в файле приложения, иначе код не скомпилируется
+ */
 extern void Initialize();
 
 } // namespace easywindows32
