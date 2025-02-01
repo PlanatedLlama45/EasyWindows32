@@ -42,6 +42,29 @@ SOFTWARE.
 namespace easywindows32 {
 
 /**
+ * @brief Класс для исключений
+ */
+class Exception : public std::exception {
+public:
+    /**
+     * @brief Конструктор
+     * @param msg текст исключения
+     */
+    Exception(const char *msg) : m_msg(msg) { }
+
+    /**
+     * @brief Получить текст исключения
+     * @return Текст исключения
+     */
+    const char *what() const _GLIBCXX_TXN_SAFE_DYN _GLIBCXX_NOTHROW override {
+        return m_msg;
+    }
+
+protected:
+    const char *m_msg;
+};
+
+/**
  * @brief Класс-обёртка для шрифта
  */
 class Font {
@@ -466,6 +489,85 @@ protected:
 
 
 /**
+ * @brief Класс-обёртка для элемента списка
+ */
+class ListBox : public IElement, public IPositionElement, public ISizeElement {
+public:
+    /**
+     * @brief Конструктор
+     * @param posX X-координата
+     * @param posY Y-координата
+     * @param width ширина
+     * @param height высота
+     */
+    ListBox(SHORT posX, SHORT posY, SHORT width, SHORT height) :
+        IElement(L"listbox"),
+        IPositionElement(posX, posY),
+        ISizeElement(width, height)
+        { }
+
+    /**
+     * @brief Инициализирует дескриптор и прикрепляет к нему шрифт и ранее добавленные элементы
+     * @param parent дескриптор родительского элемента
+     */
+    void create(HWND parent) override {
+        m_handle = CreateWindow(
+            m_className,
+            L"",
+            WS_CHILD | WS_VISIBLE | WS_BORDER | WS_VSCROLL,
+            m_pos.X, m_pos.Y,
+            m_size.X, m_size.Y,
+            parent, (HMENU)m_id,
+            NULL,
+            NULL
+        );
+        m_bindFont();
+        for (auto &item : m_items)
+            SendMessage(m_handle, LB_ADDSTRING, (WPARAM)NULL, (LPARAM)&item[0]);
+    }
+
+    /**
+     * @brief Добавить элемент в список
+     * @param value значение элемента (c-style)
+     */
+    void addItem(LPCSTR value) {
+        m_items.emplace_back(reinterpret_cast<const wchar_t *>(value));
+        if (m_handle) SendMessage(m_handle, LB_ADDSTRING, (WPARAM)NULL, (LPARAM)value);
+    }
+    /**
+     * @brief Добавить элемент в список
+     * @param value значение элемента
+     */
+    void addItem(const std::wstring &value) {
+        m_items.push_back(value);
+        if (m_handle) SendMessage(m_handle, LB_ADDSTRING, (WPARAM)NULL, (LPARAM)value.c_str());
+    }
+
+    /**
+     * @brief Получить индекс выделенного элемента
+     * @return Индекс выделенного элемента (если ни один не выбран, то LB_ERR == (-1))
+     */
+    LPARAM getSelectedIndex() const {
+        return SendMessage(m_handle, LB_GETCURSEL, (WPARAM)NULL, (LPARAM)NULL);
+    }
+    /**
+     * @brief Получить значение выделенного элемента
+     * @return Текст выделенного элемента (std::wstring)
+     * @throws Если не выбран ни один элемент (easywindows32::Exception)
+     */
+    std::wstring getSelectedItem() const {
+        LRESULT id = getSelectedIndex();
+        if (id == LB_ERR)
+            throw Exception("No item has been selected (easywindows32::ListBox::getSelectedItem)");
+        return m_items[id];
+    }
+
+protected:
+    std::vector<std::wstring> m_items;
+};
+
+
+/**
  * @brief Класс-обёртка ссылки на объект
  * @tparam T тип объекта
  */
@@ -524,6 +626,12 @@ public:
     T *operator ->() { return m_ptr; }
 
     /**
+     * @brief Получение объекта
+     * @return ссылка на объект
+     */
+    T &get() { return *m_ptr; }
+
+    /**
      * @brief Проверка равенства ссылок
      * @param ref1 ссылка А
      * @param ref2 ссылка на объект Б
@@ -554,6 +662,10 @@ using RButton = Reference<Button>;
  * @brief Ссылка на Edit
  */
 using REdit = Reference<Edit>;
+/**
+ * @brief Ссылка на ListBox
+ */
+using RListBox = Reference<ListBox>;
 
 
 struct _M_AppData {
@@ -673,6 +785,18 @@ Edit &addEdit(SHORT posX, SHORT posY, SHORT width, SHORT height, bool isNumberOn
     _m_appData.m_elements.push_back(dynamic_cast<IElement *>(newEdit));
     return *newEdit;
 }
+/**
+ * @brief Добавить элемент списка
+ * @param posX X-координата
+ * @param posY Y-координата
+ * @param width ширина
+ * @param height высота
+ */
+ListBox &addListBox(SHORT posX, SHORT posY, SHORT width, SHORT height) {
+    ListBox *newList = new ListBox(posX, posY, width, height);
+    _m_appData.m_elements.push_back(dynamic_cast<IElement *>(newList));
+    return *newList;
+}
 
 /**
  * @brief Функция инициализации элементов окна, вызывается автоматически (один раз)
@@ -750,6 +874,9 @@ LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
             elem->create(hWnd);
         return 0;
 
+    case WM_INITDIALOG:
+        return 0;
+
     case WM_KEYDOWN:
         if (wParam != VK_ESCAPE)
             return 0;
@@ -784,19 +911,6 @@ LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
                 (*func)(*btn);
             }
             return 0;
-
-    // case WM_DRAWITEM:
-    //     {
-    //         LPDRAWITEMSTRUCT pDIS = (LPDRAWITEMSTRUCT)lParam;
-    //         if (pDIS->hwndItem == hStatic) {
-    //             SetTextColor(pDIS->hDC, RGB(0, 0, 0));
-    //             CHAR staticText[99];
-    //             int len = GetWindowText(hStatic, staticText, ARRAYSIZE(staticText));
-
-    //             TextOut(pDIS->hDC, pDIS->rcItem.left, pDIS->rcItem.top, staticText, len);
-    //         }
-    //         return 1;
-    //     }
     }
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
