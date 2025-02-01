@@ -1,5 +1,4 @@
 #include "EasyWindows32.hpp"
-#include <iostream>
 
 using namespace easywindows32;
 
