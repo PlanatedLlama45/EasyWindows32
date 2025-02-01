@@ -3,9 +3,9 @@
 
 using namespace easywindows32;
 
-RListBox list;
-REdit edit;
-RButton btn;
+RListBox    list;
+REdit       edit;
+RButton     btn;
 
 void btn_onClick(Button &_btn) {
     std::wstring text = edit->getText();
