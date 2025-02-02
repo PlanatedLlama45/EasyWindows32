@@ -8,7 +8,6 @@ RButton     btnAdd;
 RButton     btnRemove;
 RButton     btnRemoveSel;
 
-#include <iostream>
 void btnAdd_onClick(Button &_btn) {
     std::wstring text = edit->getText();
     if (!text.empty())
