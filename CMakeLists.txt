@@ -19,4 +19,4 @@ else()
     add_executable(${PROJECT_NAME} WIN32 ${SOURCES})
 endif()
 
-set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "example")
+set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "example${EXAMPLE_ID}")
