@@ -479,6 +479,10 @@ protected:
 
     void m_updateTextFromHandle() {
         int len = 1+GetWindowTextLength(m_handle);
+        if (len == 1) {
+            m_text.clear();
+            return;
+        }
         m_text.resize(len, '\0');
         GetWindowText(m_handle, &m_text[0], len);
     }
@@ -542,12 +546,23 @@ public:
         m_items.push_back(value);
         if (m_handle) SendMessage(m_handle, LB_ADDSTRING, (WPARAM)NULL, (LPARAM)value.c_str());
     }
+    /**
+     * @brief Удалить элемент из списка
+     * @param index индекс элемента, который нужно удалить
+     * @throws Если индекс не входит в границы списка (easywindows::Exception)
+     */
+    void removeItem(int64_t index) {
+        if (index < 0 || index >= m_items.size())
+            throw Exception("Index out of range (easywindows32::ListBox::setSelectedIndex)");
+        SendMessage(m_handle, LB_DELETESTRING, (WPARAM)index, (LPARAM)NULL);
+        m_items.erase(m_items.begin() + index);
+    }
 
     /**
      * @brief Получить индекс выделенного элемента
-     * @return Индекс выделенного элемента (если ни один не выбран, то LB_ERR == (-1))
+     * @return Индекс выделенного элемента (если ни один не выбран, то LB_ERR)
      */
-    LPARAM getSelectedIndex() const {
+    int64_t getSelectedIndex() const {
         return SendMessage(m_handle, LB_GETCURSEL, (WPARAM)NULL, (LPARAM)NULL);
     }
     /**
@@ -556,10 +571,32 @@ public:
      * @throws Если не выбран ни один элемент (easywindows32::Exception)
      */
     std::wstring getSelectedItem() const {
-        LRESULT id = getSelectedIndex();
+        int64_t id = getSelectedIndex();
         if (id == LB_ERR)
             throw Exception("No item has been selected (easywindows32::ListBox::getSelectedItem)");
         return m_items[id];
+    }
+    /**
+     * @brief Получить индекс элемента с определённым значением
+     * @param item значение элемента
+     * @return Индекс элемента (если эелемент не найден, то LB_ERR)
+     */
+    LPARAM findItem(const std::wstring &item) const {
+        for (LPARAM i = 0; i < m_items.size(); i++) {
+            if (m_items[i] == item)
+                return i;
+        }
+        return LB_ERR;
+    }
+    /**
+     * @brief Установить выделение на определённый элемент
+     * @param index индекс элемента, который нужно выделть
+     * @throws Если индекс не входит в границы списка (easywindows::Exception)
+     */
+    void setSelectedItem(int64_t index) const {
+        if (index < 0 || index >= m_items.size())
+            throw Exception("Index out of range (easywindows32::ListBox::setSelectedIndex)");
+        SendMessage(m_handle, LB_SETCURSEL, (WPARAM)index, (LPARAM)NULL);
     }
 
 protected:
@@ -796,6 +833,23 @@ ListBox &addListBox(SHORT posX, SHORT posY, SHORT width, SHORT height) {
     ListBox *newList = new ListBox(posX, posY, width, height);
     _m_appData.m_elements.push_back(dynamic_cast<IElement *>(newList));
     return *newList;
+}
+
+/**
+ * @brief Энумерация стандартных звуков Windows
+ */
+enum class WindowsSound { Warning, Error };
+
+/**
+ * @brief Проиграть стандартный звук Windows
+ * @param sound звук
+ */
+void playWindowsSound(WindowsSound sound) {
+    switch (sound) {
+    case WindowsSound::Warning: MessageBeep(MB_ICONWARNING);    break;
+    case WindowsSound::Error:   MessageBeep(MB_ICONERROR);      break;
+    default: break;
+    }
 }
 
 /**

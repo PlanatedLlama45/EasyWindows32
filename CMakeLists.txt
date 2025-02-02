@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.13.0)
 project(EasyWindows32 VERSION 1.0.0)
 
-set(ENABLE_CONSOLE FALSE)
+set(ENABLE_CONSOLE TRUE)
 set(EXAMPLE_ID 2)
 
 file(
