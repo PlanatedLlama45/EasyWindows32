@@ -557,6 +557,14 @@ public:
         SendMessage(m_handle, LB_DELETESTRING, (WPARAM)index, (LPARAM)NULL);
         m_items.erase(m_items.begin() + index);
     }
+    /**
+     * @brief Очистить список
+     */
+    void clear() {
+        for (LRESULT i = 0; i < m_items.size(); i++)
+            SendMessage(m_handle, LB_DELETESTRING, (WPARAM)0, (LPARAM)NULL);
+        m_items.clear();
+    }
 
     /**
      * @brief Получить индекс выделенного элемента
@@ -590,13 +598,19 @@ public:
     }
     /**
      * @brief Установить выделение на определённый элемент
-     * @param index индекс элемента, который нужно выделть
+     * @param index индекс элемента, который нужно выделть (если -1, то выделение сбрасывается)
      * @throws Если индекс не входит в границы списка (easywindows::Exception)
      */
     void setSelectedItem(int64_t index) const {
-        if (index < 0 || index >= m_items.size())
+        if (index < -1 || index >= m_items.size())
             throw Exception("Index out of range (easywindows32::ListBox::setSelectedIndex)");
         SendMessage(m_handle, LB_SETCURSEL, (WPARAM)index, (LPARAM)NULL);
+    }
+    /**
+     * @brief Сбросить выделение
+     */
+    void resetSelection() const {
+        SendMessage(m_handle, LB_SETCURSEL, (WPARAM)(-1), (LPARAM)NULL);
     }
 
 protected:
