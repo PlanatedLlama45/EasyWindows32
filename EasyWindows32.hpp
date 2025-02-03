@@ -683,6 +683,12 @@ public:
     T &get() { return *m_ptr; }
 
     /**
+     * @brief Хранит ли объект ссылку?
+     * @return T - объект ссылки пуст, F - имеет объект
+     */
+    bool isnull() const { return (m_ptr == nullptr); }
+
+    /**
      * @brief Проверка равенства ссылок
      * @param ref1 ссылка А
      * @param ref2 ссылка на объект Б
