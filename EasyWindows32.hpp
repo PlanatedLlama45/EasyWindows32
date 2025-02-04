@@ -973,18 +973,23 @@ LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         }
         return 0;
 
-        case WM_COMMAND:
-            if (HIWORD(wParam) == 0) {
-                IElement *elem = _m_appData.m_elements[LOWORD(wParam) - 1];
-                Button *btn = dynamic_cast<Button *>(elem);
-                if (!btn)
-                    return 0;
-                FuncCall<Button> func = btn->getClickFunction();
-                if (!func)
-                    return 0;
-                (*func)(*btn);
-            }
-            return 0;
+    case WM_COMMAND:
+        if (HIWORD(wParam) == 0) {
+            IElement *elem = _m_appData.m_elements[LOWORD(wParam) - 1];
+            Button *btn = dynamic_cast<Button *>(elem);
+            if (!btn)
+                return 0;
+            FuncCall<Button> func = btn->getClickFunction();
+            if (!func)
+                return 0;
+            (*func)(*btn);
+        }
+        return 0;
+
+    case WM_CTLCOLORSTATIC: {
+        SetBkMode((HDC)wParam, TRANSPARENT);
+        return (LRESULT)CreateSolidBrush(0xFFFFFF);                     
+    }
     }
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
