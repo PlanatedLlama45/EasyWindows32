@@ -808,6 +808,17 @@ void setWindowResizeable(bool value) {
 }
 
 /**
+ * @brief Получить ширину экрана
+ * @return ширина экрана
+ */
+int getScreenWidth() { return GetSystemMetrics(SM_CXSCREEN); }
+/**
+ * @brief Получить высоту экрана
+ * @return высота экрана
+ */
+int getScreenHeight() { return GetSystemMetrics(SM_CYSCREEN); }
+
+/**
  * @brief Добавить статичный текстовый элемент
  * @param posX X-координата
  * @param posY Y-координата
