@@ -539,7 +539,7 @@ public:
      * @brief Получить ответную функцию
      * @return ответная функция
      */
-    FuncCall<ListBox> getSelectFunction() { return m_onSelect; }
+    FuncCall<ListBox> getOnSelect() { return m_onSelect; }
 
     /**
      * @brief Добавить элемент в список
@@ -999,7 +999,7 @@ LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
             ListBox *lb = dynamic_cast<ListBox *>(elem);
             if (!lb)
                 return 0;
-            FuncCall<ListBox> func = lb->getSelectFunction();
+            FuncCall<ListBox> func = lb->getOnSelect();
             (*func)(*lb);
         }
         return 0;
