@@ -564,7 +564,7 @@ public:
      */
     void removeItem(int64_t index) {
         if (index < 0 || index >= m_items.size())
-            throw Exception("Index out of range (easywindows32::ListBox::setSelectedIndex)");
+            throw Exception("Index out of range (easywindows32::ListBox::removeItem)");
         SendMessage(m_handle, LB_DELETESTRING, (WPARAM)index, (LPARAM)NULL);
         m_items.erase(m_items.begin() + index);
     }
@@ -614,7 +614,7 @@ public:
      */
     void setSelectedItem(int64_t index) const {
         if (index < -1 || index >= m_items.size())
-            throw Exception("Index out of range (easywindows32::ListBox::setSelectedIndex)");
+            throw Exception("Index out of range (easywindows32::ListBox::setSelectedItem)");
         SendMessage(m_handle, LB_SETCURSEL, (WPARAM)index, (LPARAM)NULL);
     }
     /**
