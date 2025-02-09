@@ -174,7 +174,8 @@ protected:
     const Font *m_font;
 
     void m_bindFont() {
-        SendMessage(m_handle, WM_SETFONT, (WPARAM)m_font->getHandle(), (LPARAM)TRUE);
+        if (m_font)
+            SendMessage(m_handle, WM_SETFONT, (WPARAM)m_font->getHandle(), (LPARAM)TRUE);
     }
 };
 
@@ -362,15 +363,14 @@ protected:
 
 
 /**
- * @brief Класс-обёртка для элемента кнопки
- */
-class Button;
-/**
  * @brief Тип функции для вызова внутри класса T
  */
 template <class T>
 using FuncCall = void (*)(T &);
 
+/**
+ * @brief Класс-обёртка для элемента кнопки
+ */
 class Button : public IElement, public ITextElement, public IPositionElement, public ISizeElement {
 public:
     /**
