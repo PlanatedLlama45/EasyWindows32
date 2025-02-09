@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.13.0)
 project(EasyWindows32 VERSION 1.0.0)
 
+file(COPY_FILE example/${PROJECT_NAME}.hpp ${PROJECT_NAME}.hpp)
+
 set(ENABLE_CONSOLE FALSE)
 set(EXAMPLE_ID 2)
 
@@ -10,8 +12,6 @@ file(
     example/EasyWindows32.hpp
     example/example${EXAMPLE_ID}.cpp
 )
-
-file(COPY_FILE example/${PROJECT_NAME}.hpp ${PROJECT_NAME}.hpp)
 
 if (ENABLE_CONSOLE)
     add_executable(${PROJECT_NAME} ${SOURCES})

@@ -39,6 +39,12 @@ SOFTWARE.
     #define _M_EZW32_CLASS_NAME L"window_class"
 #endif // !_M_EZW32_CLASS_NAME
 
+#define _M_EZW32_ELEM_NAME_STATIC L"static"
+#define _M_EZW32_ELEM_NAME_BUTTON L"button"
+#define _M_EZW32_ELEM_NAME_EDIT L"edit"
+#define _M_EZW32_ELEM_NAME_LISTBOX L"listbox"
+
+
 namespace easywindows32 {
 
 /**
@@ -168,9 +174,7 @@ protected:
     const Font *m_font;
 
     void m_bindFont() {
-        if (!m_font)
-            return;
-        SendMessage(m_handle, WM_SETFONT, (WPARAM)m_font->getHandle(), TRUE);
+        SendMessage(m_handle, WM_SETFONT, (WPARAM)m_font->getHandle(), (LPARAM)TRUE);
     }
 };
 
@@ -327,7 +331,7 @@ public:
      * @param alignText выравнивание = Center
      */
     Static(SHORT posX, SHORT posY, SHORT width, SHORT height, const std::wstring &text = L"", Align alignText = Align::Center) :
-        IElement(L"static"),
+        IElement(_M_EZW32_ELEM_NAME_STATIC),
         ITextElement(text, alignText),
         IPositionElement(posX, posY),
         ISizeElement(width, height)
@@ -380,7 +384,7 @@ public:
      * @param alignText выравнивание = Center
      */
     Button(SHORT posX, SHORT posY, SHORT width, SHORT height, const std::wstring &text = L"", FuncCall<Button> onClick = nullptr, Align alignText = Align::Center) :
-        IElement(L"button"),
+        IElement(_M_EZW32_ELEM_NAME_BUTTON),
         ITextElement(text, alignText),
         IPositionElement(posX, posY),
         ISizeElement(width, height),
@@ -406,10 +410,10 @@ public:
     }
 
     /**
-     * @brief Получить ответную функцию
+     * @brief Получить функцию при нажатии
      * @return ответная функция
      */
-    FuncCall<Button> getClickFunction() { return m_onClick; }
+    FuncCall<Button> getOnClick() { return m_onClick; }
 
 protected:
     FuncCall<Button> m_onClick;
@@ -435,7 +439,7 @@ public:
      * @param presetText начальный текст = ""
      */
     Edit(SHORT posX, SHORT posY, SHORT width, SHORT height, bool isNumberOnly = false, Align alignText = Align::Left, const std::wstring &presetText = L"") :
-        IElement(L"edit"),
+        IElement(_M_EZW32_ELEM_NAME_EDIT),
         ITextElement(presetText, alignText),
         IPositionElement(posX, posY),
         ISizeElement(width, height),
@@ -504,10 +508,11 @@ public:
      * @param width ширина
      * @param height высота
      */
-    ListBox(SHORT posX, SHORT posY, SHORT width, SHORT height) :
-        IElement(L"listbox"),
+    ListBox(SHORT posX, SHORT posY, SHORT width, SHORT height, FuncCall<ListBox> onSelect = nullptr) :
+        IElement(_M_EZW32_ELEM_NAME_LISTBOX),
         IPositionElement(posX, posY),
-        ISizeElement(width, height)
+        ISizeElement(width, height),
+        m_onSelect(onSelect)
         { }
 
     /**
@@ -518,7 +523,7 @@ public:
         m_handle = CreateWindow(
             m_className,
             L"",
-            WS_CHILD | WS_VISIBLE | WS_BORDER | WS_VSCROLL,
+            WS_CHILD | WS_VISIBLE | WS_BORDER | WS_VSCROLL | LBS_NOTIFY,
             m_pos.X, m_pos.Y,
             m_size.X, m_size.Y,
             parent, (HMENU)m_id,
@@ -529,6 +534,12 @@ public:
         for (auto &item : m_items)
             SendMessage(m_handle, LB_ADDSTRING, (WPARAM)NULL, (LPARAM)&item[0]);
     }
+
+    /**
+     * @brief Получить ответную функцию
+     * @return ответная функция
+     */
+    FuncCall<ListBox> getSelectFunction() { return m_onSelect; }
 
     /**
      * @brief Добавить элемент в список
@@ -615,6 +626,7 @@ public:
 
 protected:
     std::vector<std::wstring> m_items;
+    FuncCall<ListBox> m_onSelect;
 };
 
 
@@ -849,8 +861,8 @@ Edit &addEdit(SHORT posX, SHORT posY, SHORT width, SHORT height, bool isNumberOn
  * @param width ширина
  * @param height высота
  */
-ListBox &addListBox(SHORT posX, SHORT posY, SHORT width, SHORT height) {
-    ListBox *newList = new ListBox(posX, posY, width, height);
+ListBox &addListBox(SHORT posX, SHORT posY, SHORT width, SHORT height, FuncCall<ListBox> onSelect = nullptr) {
+    ListBox *newList = new ListBox(posX, posY, width, height, onSelect);
     _m_appData.m_elements.push_back(dynamic_cast<IElement *>(newList));
     return *newList;
 }
@@ -941,7 +953,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     using namespace easywindows32;
-
     switch (uMsg) {
     case WM_CREATE:
         for (IElement *elem : _m_appData.m_elements)
@@ -974,15 +985,22 @@ LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         return 0;
 
     case WM_COMMAND:
-        if (HIWORD(wParam) == 0) {
+        if (HIWORD(wParam) == BN_CLICKED) {
             IElement *elem = _m_appData.m_elements[LOWORD(wParam) - 1];
             Button *btn = dynamic_cast<Button *>(elem);
             if (!btn)
                 return 0;
-            FuncCall<Button> func = btn->getClickFunction();
+            FuncCall<Button> func = btn->getOnClick();
             if (!func)
                 return 0;
             (*func)(*btn);
+        } else if (HIWORD(wParam) == LBN_SELCHANGE) {
+            IElement *elem = _m_appData.m_elements[LOWORD(wParam) - 1];
+            ListBox *lb = dynamic_cast<ListBox *>(elem);
+            if (!lb)
+                return 0;
+            FuncCall<ListBox> func = lb->getSelectFunction();
+            (*func)(*lb);
         }
         return 0;
 

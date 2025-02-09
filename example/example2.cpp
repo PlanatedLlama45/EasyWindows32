@@ -7,6 +7,11 @@ REdit       edit;
 RButton     btnAdd;
 RButton     btnRemove;
 RButton     btnRemoveSel;
+RStatic     selectedItem;
+
+void list_onSelect(ListBox &_lb) {
+    selectedItem->setText(L"Selected: " + list->getSelectedItem());
+}
 
 void btnAdd_onClick(Button &_btn) {
     std::wstring text = edit->getText();
@@ -39,9 +44,10 @@ void easywindows32::Initialize() {
     setWindowSize(400, 300);
     setWindowTitle(L"List");
     IElement::setFontDefault(mainFont);
-    list            = addListBox(10, 10, 100, 200);
+    list            = addListBox(10, 10, 100, 200, list_onSelect);
     edit            = addEdit(120, 10, 200, 30);
     btnAdd          = addButton(120, 50, 200, 30, L"Add to list", btnAdd_onClick);
     btnRemove       = addButton(120, 90, 200, 30, L"Remove from list", btnRemove_onClick);
     btnRemoveSel    = addButton(120, 130, 200, 30, L"Remove selected", btnRemoveSel_onClick);
+    selectedItem    = addStatic(120, 170, 200, 30, L"Selected: ");
 }
