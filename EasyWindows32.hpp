@@ -572,7 +572,7 @@ public:
      * @brief Очистить список
      */
     void clear() {
-        for (LRESULT i = 0; i < m_items.size(); i++)
+        for (int64_t i = 0; i < m_items.size(); i++)
             SendMessage(m_handle, LB_DELETESTRING, (WPARAM)0, (LPARAM)NULL);
         m_items.clear();
     }
@@ -600,8 +600,8 @@ public:
      * @param item значение элемента
      * @return Индекс элемента (если эелемент не найден, то LB_ERR)
      */
-    LPARAM findItem(const std::wstring &item) const {
-        for (LPARAM i = 0; i < m_items.size(); i++) {
+    int64_t findItem(const std::wstring &item) const {
+        for (int64_t i = 0; i < m_items.size(); i++) {
             if (m_items[i] == item)
                 return i;
         }
@@ -613,7 +613,7 @@ public:
      * @throws Если индекс не входит в границы списка (easywindows::Exception)
      */
     void setSelectedItem(int64_t index) const {
-        if (index < -1 || index >= m_items.size())
+        if (index < -1 || index >= (int64_t)m_items.size())
             throw Exception("Index out of range (easywindows32::ListBox::setSelectedItem)");
         SendMessage(m_handle, LB_SETCURSEL, (WPARAM)index, (LPARAM)NULL);
     }
