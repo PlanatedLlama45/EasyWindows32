@@ -750,6 +750,7 @@ struct _M_AppData {
     LPCWSTR m_title;
     bool m_isRunning;
     std::vector<IElement *> m_elements;
+    void (*m_onExit)();
 };
 
 _M_AppData _m_appData = {
@@ -760,9 +761,17 @@ _M_AppData _m_appData = {
     .m_isResizeable  = false,
     .m_style         = WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME,
     .m_title         = L"window title",
-    .m_elements      = { }
+    .m_elements      = { },
+    .m_onExit        = nullptr
 };
 
+/**
+ * @brief Устанавливает функцию, которая запускается при выходе из программы
+ * @param onExit указатель на функцию
+ */
+void setAppOnExit(void (*onExit)()) {
+    _m_appData.m_onExit = onExit;
+}
 /**
  * @brief Установить положение окна на экране
  * @param x X-координата
@@ -958,6 +967,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
+
+    if (_m_appData.m_onExit)
+        (*_m_appData.m_onExit)();
 
     return msg.wParam;
 }
