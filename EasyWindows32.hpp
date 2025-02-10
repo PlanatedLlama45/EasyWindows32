@@ -968,9 +968,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         DispatchMessage(&msg);
     }
 
-    if (_m_appData.m_onExit)
-        (*_m_appData.m_onExit)();
-
     return msg.wParam;
 }
 
@@ -990,6 +987,8 @@ LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
             return 0;
 
     case WM_DESTROY:
+        if (_m_appData.m_onExit)
+            (*_m_appData.m_onExit)();
         PostQuitMessage(0);
         return 0;
 
