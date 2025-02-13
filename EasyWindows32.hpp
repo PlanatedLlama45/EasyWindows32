@@ -454,7 +454,7 @@ public:
         m_handle = CreateWindow(
             m_className,
             m_text.c_str(),
-            WS_CHILD | WS_VISIBLE | WS_BORDER | (m_isNumberOnly ? ES_NUMBER : 0) | m_getTextAlignFlag(),
+            WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | (m_isNumberOnly ? ES_NUMBER : 0) | m_getTextAlignFlag(),
             m_pos.X, m_pos.Y,
             m_size.X, m_size.Y,
             parent, (HMENU)m_id,
